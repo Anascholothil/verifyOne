@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:verifyone/core/view/screens/authentications/login_screen.dart';
 
 import 'core/view/screens/home/home_screen.dart';
 
@@ -13,12 +14,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home:  HomeScreen( ),
+      // home:  HomeScreen( ),
+      home:  LoginScreen( ),
     );
   }
 }
