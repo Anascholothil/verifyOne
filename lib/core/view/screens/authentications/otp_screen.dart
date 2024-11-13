@@ -1,56 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:verifyone/core/utils/constants/colors.dart';
+import 'package:verifyone/core/utils/constants/widgets_screens.dart';
 
-class LoginScreen extends StatelessWidget {
+class OtpScreen extends StatelessWidget {
+  const OtpScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: TextFormField(
-          keyboardType: TextInputType.phone,
-          decoration: InputDecoration(
-            hintText: 'Enter your phone number *',
-            hintStyle: TextStyle(color: Colors.grey),
-            contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.only(right: 8.0), // Spacing between icon and text
-              child: RichText(
-                text: TextSpan(
-                  text: 'Enter your phone number ',
-                  style: TextStyle(color: Colors.grey, fontSize: 16.0),
-                  children: [
-                    TextSpan(
-                      text: '*',
-                      style: TextStyle(color: Colors.red), // Asterisk in red
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15.0), // Curved edges
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15.0),
-              borderSide: BorderSide(color: Colors.grey),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15.0),
-              borderSide: BorderSide(color: Colors.blue),
+      backgroundColor: AppColors.white,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: screenHeight/15,
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Image(
+              image: AssetImage('assets/logimg.png'),
+              width: screenWidth / 2,
+              height: screenHeight / 5,
+              fit: BoxFit.contain,
             ),
           ),
-          style: TextStyle(color: Colors.black),
-        ),
-      ),
+          SizedBox(height: screenHeight / 15), // Adds spacing before the title
+          Padding(
+            padding:  EdgeInsets.only(left: screenWidth/17),
+            child: titles('OTP Verification', 15),
+          ),
+          SizedBox(height: screenHeight / 30), // Adds spacing before the title
+
+          Padding(
+            padding:  EdgeInsets.symmetric(horizontal: screenWidth/20),
+            child: Text('Enter the verification code we just sent to your number +91 *******21.',style: TextStyle(fontSize: 13,fontWeight: FontWeight.w400,color: Colors.black54),),
+          ),
+
+      ],),
+
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    home: LoginScreen(),
-  ));
 }

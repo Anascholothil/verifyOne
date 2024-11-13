@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:verifyone/core/view/screens/authentications/login_screen.dart';
+import 'package:verifyone/core/view/screens/authentications/otp_screen.dart';
 
 import 'core/view/screens/home/home_screen.dart';
 
@@ -21,7 +22,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       // home:  HomeScreen( ),
-      home:  LoginScreen( ),
+      // home:  LoginScreen( ),
+      home:  OtpScreen( ),
     );
   }
 }
