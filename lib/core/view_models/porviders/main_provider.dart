@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,77 +12,91 @@ import 'package:verifyone/core/models/user_models.dart';
 class MainProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  TextEditingController nameController = TextEditingController();
+  TextEditingController ageController = TextEditingController();
+  TextEditingController numberController = TextEditingController();
+  List<AppUser> usersList = [];
+  List<AppUser> filteredUsersList = [];
+  DocumentSnapshot? lastDocument;
 
-
-
-
-
-  // TextEditingControllers for managing text fields
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-
-  TextEditingController get nameController => _nameController;
-  TextEditingController get ageController => _ageController;
-  TextEditingController get phoneController => _phoneController;
-
-  // Method to add user to Firestore
+  bool isFetching = false;
   Future<void> addUser(BuildContext context) async {
-    final name = _nameController.text;
-    final age = int.tryParse(_ageController.text) ?? 0;
-    final phoneNumber = _phoneController.text;
+    String id = DateTime.now().millisecondsSinceEpoch.toString();
+    HashMap<String, dynamic> map = HashMap();
+    map["USER_ID"] = id;
 
-    if (name.isEmpty || phoneNumber.isEmpty || age <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Please fill all fields correctly!"),
-      ));
-      return;
-    }
+    map["NAME"] = nameController.text;
+    map["AGE"] = ageController.text;
+    map["NUMBER"] = numberController.text;
 
     try {
-      final newUser = Userdetails(
-        name: name,
-        age: age,
-        phoneNumber: phoneNumber,
-      );
+      await FirebaseFirestore.instance.collection("USERS").doc(id).set(map);
 
-      await _firestore.collection('users').add({
-        'name': newUser.name,
-        'age': newUser.age,
-        'phoneNumber': newUser.phoneNumber,
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Successfully Added"),
+              duration: Duration(seconds: 2),
+              backgroundColor: Color(0xda4b4b4b),
+            ),
+          );
+        }
       });
-
-      // Clear the text controllers after saving the user
-      _nameController.clear();
-      _ageController.clear();
-      _phoneController.clear();
-
-      notifyListeners(); // Updates listeners after adding to Firestore
-    } catch (error) {
-      if (kDebugMode) {
-        print("Failed to add user: $error");
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to add user. Please try again."),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
+    }
+    notifyListeners();
+  }
+  Future<void> fetchUsers() async {
+    if (isFetching) return;
+    isFetching = true;
+    try {
+      QuerySnapshot querySnapshot;
+      if (lastDocument == null) {
+        querySnapshot = await FirebaseFirestore.instance.collection("USERS").limit(10).get();
+      } else {
+        querySnapshot = await FirebaseFirestore.instance
+            .collection("USERS")
+            .startAfterDocument(lastDocument!)
+            .limit(2)
+            .get();
+      }
+
+      if (querySnapshot.docs.isNotEmpty) {
+        for (var element in querySnapshot.docs) {
+          usersList.add(AppUser.fromFirestore(element));
+        }
+        lastDocument = querySnapshot.docs.last;
+        filteredUsersList = List.from(usersList);
+      }
+      notifyListeners();
+    } catch (e) {
+      print("Error in fetchUsers: $e");
+    } finally {
+      isFetching = false; // Allow fetching again
     }
   }
 
-  // Method to get users from Firestore
-  Future<List<Userdetails>> getUsers() async {
-    final querySnapshot = await _firestore.collection('users').get();
-    return querySnapshot.docs
-        .map((doc) => Userdetails(
-              name: doc['name'],
-              age: doc['age'],
-              phoneNumber: doc['phoneNumber'],
-            ))
-        .toList();
-  }
-
-  // Dispose controllers when no longer needed
-  void dispose() {
-    _nameController.dispose();
-    _ageController.dispose();
-    _phoneController.dispose();
-    super.dispose();
+  Future<void> filterUsers(String query) async {
+    if (query.isEmpty) {
+      filteredUsersList = List.from(usersList);
+    } else {
+      filteredUsersList = usersList
+          .where((user) =>
+      user.name.toLowerCase().contains(query.toLowerCase()) ||
+          user.number.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
+    print("Filtered users: ${filteredUsersList.length}");
+    notifyListeners();
   }
 
   ///search bar dynamic
@@ -95,6 +110,30 @@ class MainProvider with ChangeNotifier {
     _startHintTextRotation();
   }
 
+  /// sort pop
+  void sortUsersByAge(int? selectedOption) {
+    switch (selectedOption) {
+      case 1: // Younger (below 60)
+        filteredUsersList = usersList.where((user) => int.parse(user.age) < 60).toList();
+        break;
+      case 2: // Older (60 and above)
+        filteredUsersList = usersList.where((user) => int.parse(user.age) >= 60).toList();
+        break;
+      default: // All
+        filteredUsersList = List.from(usersList);
+        break;
+    }
+    print("Filtered users after sorting: ${filteredUsersList.length}");
+    notifyListeners();
+  }
+
+/// clear Function
+  void cleartextfield (){
+    nameController.clear();
+    ageController.clear();
+    numberController.clear();
+  }
+///hint rotation
   void _startHintTextRotation() {
     Future.delayed(const Duration(seconds: 4), () {
       currentHintIndex = (currentHintIndex + 1) % hintTexts.length;

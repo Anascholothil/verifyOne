@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:verifyone/core/models/user_models.dart';
+import 'package:verifyone/core/services/location_provider.dart';
 import 'package:verifyone/core/utils/constants/colors.dart';
 import 'package:verifyone/core/utils/constants/widgets_screens.dart';
 import 'package:verifyone/core/view_models/porviders/main_provider.dart';
@@ -12,30 +15,90 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    Future.microtask(() => Provider.of<LocationProvider>(context, listen: false)
+        .getCurrentLocationAndSave());
+    MainProvider mainprovider =
+        Provider.of<MainProvider>(context, listen: false);
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      mainprovider.fetchUsers();
+    });
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: const Icon(Icons.location_on, color: Colors.white),
-        title: const Text(
-          "Mannarkkad",
-          style: TextStyle(color: Colors.white),
+        backgroundColor: AppColors.bttnblack,
+        elevation: 1,
+        leading: Icon(
+          Icons.location_on,
+          color: AppColors.white,
         ),
-        centerTitle: true,
+        title: Text(
+          "Nilambur",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.white,
+          ),
+        ),
       ),
-      backgroundColor: Colors.grey[200],
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () => _showAddUserDialog(context),
-        backgroundColor: Colors.black,
-        child: Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton:
+          Consumer<MainProvider>(builder: (context, pro, child) {
+        return FloatingActionButton(
+          shape: const CircleBorder(),
+          onPressed: () {
+            pro.cleartextfield();
+            _showAddUserDialog(context);
+          },
+          backgroundColor: Colors.black,
+          child: Icon(Icons.add, color: Colors.white),
+        );
+      }),
       body: Padding(
         padding: EdgeInsets.all(screenWidth * 0.04),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSearchBar(context),
+            Consumer<MainProvider>(
+              builder: (context, pro, child) {
+                return TextFormField(
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.search_rounded),
+                    suffixIcon: InkWell(
+                        onTap: () {
+                          _sortingPopup(context);
+                        },
+                        child: Icon(Icons.sort)),
+                    hintText: pro.currentHintText,
+                    hintStyle: TextStyle(
+                      color: AppColors.bttnblack,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w300,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 16.0, horizontal: 20.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide:
+                          BorderSide(color: AppColors.bttnblack, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide:
+                          BorderSide(color: AppColors.bttnblack, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.blue, width: 1),
+                    ),
+                  ),
+                  style: TextStyle(color: AppColors.textblack),
+                  onChanged: (value) {
+                    // Filter users when the search text changes
+                    pro.filterUsers(value);
+                  },
+                );
+              },
+            ),
             SizedBox(height: screenHeight * 0.02),
             Text(
               "User Lists",
@@ -44,30 +107,54 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: screenHeight * 0.02),
             Expanded(
-              child: ListView.builder(
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding:
-                        EdgeInsets.symmetric(vertical: screenHeight * 0.01),
-                    child: Material(
-                      elevation: 4,
-                      borderRadius: BorderRadius.circular(8),
-                      shadowColor: Colors.black.withOpacity(0.1),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.all(screenWidth * 0.02),
-                        shape: RoundedRectangleBorder(
+              child: Consumer<MainProvider>(
+                builder: (context, pro, child) {
+                  return ListView.builder(
+                    itemCount: pro.filteredUsersList.length +
+                        (pro.isFetching
+                            ? 1
+                            : 0), // +1 for loading indicator if isLoading is true
+                    padding: EdgeInsets.symmetric(vertical: 4.0),
+                    shrinkWrap: false, // Remove shrinkWrap
+                    physics:
+                        AlwaysScrollableScrollPhysics(), // Add scrollable physics
+                    itemBuilder: (context, index) {
+                      if (index == pro.filteredUsersList.length &&
+                          pro.isFetching) {
+                        // Show loading indicator when reaching the end of the list and data is being fetched
+                        return Center(child: CircularProgressIndicator());
+                      }
+
+                      // Regular list item rendering
+                      AppUser item = pro.filteredUsersList[index];
+                      return Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.0),
+                        child: Material(
+                          elevation: 4,
                           borderRadius: BorderRadius.circular(8),
+                          shadowColor: Colors.black.withOpacity(0.1),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            tileColor: AppColors.white,
+                            leading: CircleAvatar(
+                              backgroundColor: AppColors.blue,
+                              child: Text(
+                                item.name[0].toUpperCase(),
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              radius: 40,
+                            ),
+                            title: Text(item.name),
+                            subtitle: Text(item.number),
+                            trailing: Text("Age: ${item.age}",
+                                style: TextStyle(fontSize: 14)),
+                          ),
                         ),
-                        tileColor: Colors.white,
-                        leading: CircleAvatar(
-                          backgroundImage: const AssetImage("assets/otp.png"),
-                          radius: screenWidth * 0.08,
-                        ),
-                        title: const Text("User Name"),
-                        subtitle: const Text("Age: 33"),
-                      ),
-                    ),
+                      );
+                    },
                   );
                 },
               ),
@@ -78,41 +165,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBar(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.width;
-    final provider = Provider.of<MainProvider>(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.search),
-          hintText: provider
-              .currentHintText, // Access currentHintText from MainProvider
-          hintStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-          border: InputBorder.none,
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.filter_alt),
-            onPressed: () {
-              // Add filter action
-              _sortingPopup(context);
-            },
-          ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.04,
-            vertical: screenWidth * 0.03,
-          ),
-        ),
-      ),
-    );
-  }
+
+
 
   void _showAddUserDialog(BuildContext context) {
-    final _formKey = GlobalKey<FormState>();
     final screenWidth = MediaQuery.of(context).size.width;
 
     showDialog(
@@ -128,46 +185,11 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                titles("Add A New User", 14),
+                titles("Add A New User", 13),
                 SizedBox(height: screenWidth * 0.05),
-                Consumer<MainProvider>(
-                  builder: (context, pro, child) {
-                    return GestureDetector(
-                      onTap: () {
-                        showBottomSheet(context);
-                      },
-                      child: Center(
-                        child: Container(
-                          width: screenWidth * 0.2,
-                          height: screenWidth * 0.2,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey[200],
-                          ),
-                          child: ClipOval(
-                            child: pro.userImageFile != null
-                                ? Image.file(
-                                    pro.userImageFile!,
-                                    fit: BoxFit.cover,
-                                    width: screenWidth * 0.2,
-                                    height: screenWidth * 0.2,
-                                  )
-                                : Image.asset(
-                                    'assets/addUser.png',
-                                    fit: BoxFit.cover,
-                                    width: screenWidth * 0.2,
-                                    height: screenWidth * 0.2,
-                                  ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
                 SizedBox(height: screenWidth * 0.05),
-                Form(
-                  key: _formKey,
-                  child: Column(
+                Consumer<MainProvider>(builder: (context, pro, child) {
+                  return Column(
                     children: [
                       _AddUserTextField(
                         labelText: "Name",
@@ -178,6 +200,7 @@ class HomeScreen extends StatelessWidget {
                           }
                           return null;
                         },
+                        controller: pro.nameController,
                       ),
                       SizedBox(height: screenWidth * 0.03),
                       _AddUserTextField(
@@ -197,6 +220,7 @@ class HomeScreen extends StatelessWidget {
                           }
                           return null;
                         },
+                        controller: pro.ageController,
                       ),
                       SizedBox(height: screenWidth * 0.03),
                       _AddUserTextField(
@@ -216,6 +240,7 @@ class HomeScreen extends StatelessWidget {
                           }
                           return null;
                         },
+                        controller: pro.numberController,
                       ),
                       SizedBox(height: screenWidth * 0.05),
                       Row(
@@ -237,9 +262,20 @@ class HomeScreen extends StatelessWidget {
                               color: Colors.blue,
                               textColor: Colors.white,
                               onPressed: () {
-                                if (_formKey.currentState?.validate() ??
-                                    false) {
+                                if (pro.nameController.text.isNotEmpty &&
+                                    pro.ageController.text.isNotEmpty &&
+                                    pro.numberController.text.isNotEmpty) {
+                                  pro.addUser(context);
                                   Navigator.pop(context);
+                                  pro.fetchUsers();
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          "Please fill all fields and select an image"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
                                 }
                               },
                             ),
@@ -247,8 +283,8 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ],
-                  ),
-                ),
+                  );
+                }),
               ],
             ),
           ),
@@ -259,6 +295,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _AddUserTextField({
     required String labelText,
+    required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
     required BuildContext context,
     List<TextInputFormatter>? inputFormatter,
@@ -267,6 +304,7 @@ class HomeScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return TextFormField(
+      controller: controller,
       keyboardType: keyboardType,
       inputFormatters: inputFormatter,
       decoration: InputDecoration(
@@ -369,29 +407,31 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+}
 
-  void _sortingPopup(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+void _sortingPopup(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
 
-    // Add a variable to track the selected sorting option
-    int? selectedOption = 0; // 0 for All, 1 for Younger, 2 for Older
+  // Add a variable to track the selected sorting option
+  int? selectedOption = 0; // 0 for All, 1 for Younger, 2 for Older
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: Container(
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Consumer<MainProvider>(builder: (context, prov, child) {
+              return Container(
                 width: screenWidth * 0.8,
                 padding: EdgeInsets.all(screenWidth * 0.05),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    titles("Sort", 12),
+                    titles("Sort", 14),
                     RadioListTile<int>(
                       fillColor: WidgetStatePropertyAll(AppColors.blue),
                       title: Text("All"),
@@ -427,21 +467,28 @@ class HomeScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 10),
                     Center(
-                        child: _Buttons(context,
-                            label: "Apply",
-                            color: AppColors.blue,
-                            textColor: AppColors.white, onPressed: () {
-                      Navigator.pop(context);
-                    }))
+                        child: ElevatedButton(
+                      onPressed: () {
+                        prov.sortUsersByAge(
+                          selectedOption,
+                        );
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        "Apply",
+                        style: TextStyle(color: AppColors.blue,
+                            fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    )),
                   ],
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+              );
+            }),
+          );
+        },
+      );
+    },
+  );
 }
 
 ///my add user
