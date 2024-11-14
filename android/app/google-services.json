@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "945567739219",
+    "project_id": "verifyone-901ec",
+    "storage_bucket": "verifyone-901ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:945567739219:android:b4fc572716dd3027b8c5a6",
+        "android_client_info": {
+          "package_name": "com.example.verifyone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrT7GIcWKwLO5QcZASM9BCl0yIUL9iLjA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
