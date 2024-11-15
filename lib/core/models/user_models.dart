@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AppUser {
-  String id;
-  String name;
-  String age;
-  String number;
+  final String id;
+  final String name;
+  final String age;
+  final String number;
 
   AppUser({
     required this.id,
@@ -16,9 +16,9 @@ class AppUser {
   factory AppUser.fromFirestore(DocumentSnapshot doc) {
     return AppUser(
       id: doc.id,
-      name: doc.get("NAME").toString(),
-      age: doc.get("AGE").toString(),
-      number: doc.get("NUMBER").toString(),
+      name: doc.get("NAME") as String,
+      age: doc.get("AGE") as String,
+      number: doc.get("NUMBER") as String,
     );
   }
 }
