@@ -123,7 +123,7 @@ class HomeScreen extends StatelessWidget {
                         );
                       }
 
-                      // Display each user item
+                      /// Item Display
                       AppUser item = pro.filteredUsersList[index];
                       return Padding(
                         padding: EdgeInsets.symmetric(vertical: 4.0),
@@ -486,109 +486,3 @@ void _sortingPopup(BuildContext context) {
   );
 }
 
-///my add user
-// void _showAddUserDialog(BuildContext context) {
-//   final screenWidth = MediaQuery.of(context).size.width;
-//
-//   showDialog(
-//     context: context,
-//     builder: (BuildContext context) {
-//       return Dialog(
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-//         child: Container(
-//           width: screenWidth * 0.8,
-//           padding: EdgeInsets.all(screenWidth * 0.05),
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               Text(
-//                 "Add A New User",
-//                 style: TextStyle(
-//                   fontSize: screenWidth * 0.05,
-//                   fontWeight: FontWeight.bold,
-//                 ),
-//               ),
-//               SizedBox(height: screenWidth * 0.05),
-//               Form(
-//                 child: Column(
-//                   children: [
-//                     // Name field
-//                     TextFormField(
-//                       controller: Provider.of<MainProvider>(context).nameController,
-//                       decoration: InputDecoration(labelText: "Name"),
-//                       validator: (value) {
-//                         if (value == null || value.isEmpty) {
-//                           return 'Please enter a name';
-//                         }
-//                         return null;
-//                       },
-//                     ),
-//                     SizedBox(height: screenWidth * 0.03),
-//                     // Age field
-//                     TextFormField(
-//                       controller: Provider.of<MainProvider>(context).ageController,
-//                       keyboardType: TextInputType.number,
-//                       inputFormatters: [
-//                         FilteringTextInputFormatter.digitsOnly,
-//                         LengthLimitingTextInputFormatter(2),
-//                       ],
-//                       decoration: InputDecoration(labelText: "Age"),
-//                       validator: (value) {
-//                         if (value == null || value.isEmpty) {
-//                           return 'Please enter age';
-//                         }
-//                         return null;
-//                       },
-//                     ),
-//                     SizedBox(height: screenWidth * 0.03),
-//                     // Phone field
-//                     TextFormField(
-//                       controller: Provider.of<MainProvider>(context).phoneController,
-//                       keyboardType: TextInputType.phone,
-//                       inputFormatters: [
-//                         FilteringTextInputFormatter.digitsOnly,
-//                         LengthLimitingTextInputFormatter(10),
-//                       ],
-//                       decoration: InputDecoration(labelText: "Phone Number"),
-//                       validator: (value) {
-//                         if (value == null || value.isEmpty) {
-//                           return 'Please enter phone number';
-//                         }
-//                         if (value.length != 10) {
-//                           return 'Phone number must be 10 digits';
-//                         }
-//                         return null;
-//                       },
-//                     ),
-//                     SizedBox(height: screenWidth * 0.05),
-//                     Row(
-//                       children: [
-//                         Expanded(
-//                           child: ElevatedButton(
-//                             onPressed: () => Navigator.pop(context),
-//                             child: Text("Cancel"),
-//                           ),
-//                         ),
-//                         SizedBox(width: screenWidth * 0.02),
-//                         Expanded(
-//                           child: ElevatedButton(
-//                             onPressed: () {
-//                               final provider = Provider.of<MainProvider>(context, listen: false);
-//                               provider.addUser(context);
-//                               Navigator.pop(context); // Close the dialog
-//                             },
-//                             child: Text("Save"),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       );
-//     },
-//   );
-// }
