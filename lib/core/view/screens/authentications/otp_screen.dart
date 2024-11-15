@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:verifyone/core/services/login_provider.dart';  // Ensure correct import
-import 'package:verifyone/core/utils/constants/colors.dart';  // Define your colors
+import 'package:verifyone/core/services/login_provider.dart';
+import 'package:verifyone/core/utils/constants/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:verifyone/core/utils/constants/widgets_screens.dart';
-import 'package:verifyone/core/view/screens/home/home_screen.dart';  // Import Firebase Auth
-import 'package:pinput/pinput.dart';  // Import Pinput widget
+import 'package:verifyone/core/view/screens/home/home_screen.dart';
+import 'package:pinput/pinput.dart';
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({Key? key}) : super(key: key);
@@ -15,7 +15,7 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final TextEditingController otpController = TextEditingController();  // OTP input controller
+  final TextEditingController otpController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -35,39 +35,9 @@ class _OtpScreenState extends State<OtpScreen> {
               SizedBox(height: screenHeight / 28),
               _buildOtpField(screenHeight, screenWidth),
               SizedBox(height: screenHeight / 60),
-
-              // 59 sec in red color
-              Center(
-                child: Text(
-                  "59 sec",
-                  style: TextStyle(fontSize: 14, color: AppColors.red),
-                ),
-              ),
-
+              _buildTimerText(),
               SizedBox(height: screenHeight / 30),
-
-              // Don't Get OTP? Resend (with "Resend" in blue)
-              Center(
-                child: RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      color: AppColors.bttnblack,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    children: [
-                      TextSpan(text: "Don't Get OTP? "),
-                      TextSpan(
-                        text: 'Resend',
-                        style: TextStyle(
-                            decoration: TextDecoration.underline,
-                            color: AppColors.blue), // Blue color for Resend
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
+              _buildResendText(),
               SizedBox(height: screenHeight / 60),
               _buildVerifyButton(screenHeight, screenWidth, context),
             ],
@@ -77,11 +47,10 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 
-  // Title widget
   Widget _buildTitle() {
     return Column(
       children: [
-        Center(child: Image.asset('assets/logimg.png',scale: 3,)),
+        Center(child: Image.asset('assets/logimg.png', scale: 3)),
         Row(
           children: [
             Text(
@@ -90,12 +59,12 @@ class _OtpScreenState extends State<OtpScreen> {
             ),
           ],
         ),
-        SizedBox(height: 10,),
+        SizedBox(height: 10),
         Row(
           children: [
             Text(
               'Enter the verification code we just sent to your \n number +91 *******21.',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w300,color: Colors.black54),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w300, color: Colors.black54),
             ),
           ],
         ),
@@ -103,10 +72,9 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 
-  // OTP Pinput widget
   Widget _buildOtpField(double screenHeight, double screenWidth) {
     return Padding(
-      padding: EdgeInsets.only(left: 8.0),
+      padding: const EdgeInsets.only(left: 8.0),
       child: Pinput(
         controller: otpController,
         length: 6,
@@ -128,21 +96,74 @@ class _OtpScreenState extends State<OtpScreen> {
             border: Border.all(width: 2, color: Color(0xFF6B526B)),
           ),
         ),
-        onCompleted: (pin) {
-          _verifyOtp(pin, context);  // Trigger OTP verification when the code is completed
-        },
+        onCompleted: (pin) => _verifyOtp(pin, context),
       ),
     );
   }
 
-  // OTP verification logic
+  Widget _buildTimerText() {
+    return Center(
+      child: Text(
+        "59 sec",
+        style: TextStyle(fontSize: 14, color: AppColors.red),
+      ),
+    );
+  }
+
+  Widget _buildResendText() {
+    return Center(
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(color: AppColors.bttnblack, fontSize: 14, fontWeight: FontWeight.w400),
+          children: [
+            TextSpan(text: "Don't Get OTP? "),
+            TextSpan(
+              text: 'Resend',
+              style: TextStyle(decoration: TextDecoration.underline, color: AppColors.blue),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerifyButton(double screenHeight, double screenWidth, BuildContext context) {
+    return Consumer<LoginProviderNew>(
+      builder: (context, loginProvider, child) {
+        return Center(
+          child: TextButton(
+            onPressed: () async {
+              final enteredOtp = otpController.text.trim();
+              if (enteredOtp.isNotEmpty) {
+                _verifyOtp(enteredOtp, context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter the OTP')),
+                );
+              }
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.bttnblack,
+              fixedSize: Size(screenWidth / 1.2, screenHeight / 18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(60)),
+            ),
+            child: loginProvider.loader
+                ? CircularProgressIndicator(color: AppColors.white)
+                : Text(
+              'Verify',
+              style: TextStyle(color: AppColors.white),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _verifyOtp(String enteredOtp, BuildContext context) async {
     if (enteredOtp.isNotEmpty) {
       try {
         final loginProvider = Provider.of<LoginProviderNew>(context, listen: false);
         loginProvider.setLoading(true);
-
-        // Call verify method from loginProvider to verify OTP
         await loginProvider.verify(context, enteredOtp);
 
         if (FirebaseAuth.instance.currentUser != null) {
@@ -168,41 +189,4 @@ class _OtpScreenState extends State<OtpScreen> {
       );
     }
   }
-
-  // Verify button widget
-  Widget _buildVerifyButton(double screenHeight, double screenWidth, BuildContext context) {
-    return Consumer<LoginProviderNew>(  // Listen to LoginProvider
-      builder: (context, loginProvider, child) {
-        return Center(
-          child: TextButton(
-            onPressed: () async {
-              final enteredOtp = otpController.text.trim();  // Get OTP from input field
-
-              if (enteredOtp.isNotEmpty) {
-                _verifyOtp(enteredOtp, context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter the OTP')),
-                );
-              }
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: AppColors.bttnblack,
-              fixedSize: Size(screenWidth / 1.2, screenHeight / 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(60),
-              ),
-            ),
-            child: loginProvider.loader  // Show loading indicator when loader is true
-                ? CircularProgressIndicator(color: AppColors.white)
-                : Text(
-              'Verify',
-              style: TextStyle(color: AppColors.white),
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
-

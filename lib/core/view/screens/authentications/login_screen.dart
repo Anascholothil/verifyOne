@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Logo widget
+  /// Logo widget
   Widget _buildLogo(double screenHeight, double screenWidth) {
     return Align(
       alignment: Alignment.topCenter,
@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Phone number input field widget
+  /// Phone number input field widget
   Widget _buildPhoneNumberForm(BuildContext context) {
     final loginProvider = Provider.of<LoginProviderNew>(context);
     return Form(
@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Terms and conditions widget
+  /// Terms and conditions widget
   Widget _buildTermsAndConditions() {
     return Center(
       child: RichText(
@@ -138,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // OTP button widget
+  /// OTP button widget
   Widget _buildOtpButton(double screenHeight, double screenWidth, BuildContext context) {
     return Consumer<LoginProviderNew>(
       builder: (context, loginProvider, child) {
