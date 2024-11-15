@@ -58,6 +58,7 @@ class MainProvider with ChangeNotifier {
   Future<void> fetchUsers() async {
     if (isFetching) return;
     isFetching = true;
+
     try {
       QuerySnapshot querySnapshot;
       if (lastDocument == null) {
@@ -66,26 +67,32 @@ class MainProvider with ChangeNotifier {
         querySnapshot = await FirebaseFirestore.instance
             .collection("USERS")
             .startAfterDocument(lastDocument!)
-            .limit(2)
+            .limit(10)
             .get();
       }
 
       if (querySnapshot.docs.isNotEmpty) {
-        for (var element in querySnapshot.docs) {
-          usersList.add(AppUser.fromFirestore(element));
-        }
+        usersList.addAll(querySnapshot.docs.map((doc) => AppUser.fromFirestore(doc)).toList());
         lastDocument = querySnapshot.docs.last;
         filteredUsersList = List.from(usersList);
       }
+
       notifyListeners();
     } catch (e) {
       print("Error in fetchUsers: $e");
     } finally {
-      isFetching = false; // Allow fetching again
+      isFetching = false;
     }
   }
 
+  int? selectedOption = 0;
+  void updateSelectedOption(int option) {
+    selectedOption = option;
+    notifyListeners();
+  }
+
   Future<void> filterUsers(String query) async {
+    // First, filter users by the search query (name or number)
     if (query.isEmpty) {
       filteredUsersList = List.from(usersList);
     } else {
@@ -95,7 +102,10 @@ class MainProvider with ChangeNotifier {
           user.number.toLowerCase().contains(query.toLowerCase()))
           .toList();
     }
-    print("Filtered users: ${filteredUsersList.length}");
+
+    sortUsersByAge(selectedOption);
+
+    print("Filtered and sorted users: ${filteredUsersList.length}");
     notifyListeners();
   }
 
@@ -108,23 +118,21 @@ class MainProvider with ChangeNotifier {
 
   MainProvider() {
     _startHintTextRotation();
+    fetchUsers();
   }
 
   /// sort pop
   void sortUsersByAge(int? selectedOption) {
     switch (selectedOption) {
       case 1: // Younger (below 60)
-        filteredUsersList = usersList.where((user) => int.parse(user.age) < 60).toList();
+        filteredUsersList = filteredUsersList.where((user) => int.parse(user.age) < 60).toList();
         break;
       case 2: // Older (60 and above)
-        filteredUsersList = usersList.where((user) => int.parse(user.age) >= 60).toList();
+        filteredUsersList = filteredUsersList.where((user) => int.parse(user.age) >= 60).toList();
         break;
       default: // All
-        filteredUsersList = List.from(usersList);
         break;
     }
-    print("Filtered users after sorting: ${filteredUsersList.length}");
-    notifyListeners();
   }
 
 /// clear Function

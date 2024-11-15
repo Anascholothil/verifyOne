@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:verifyone/core/services/location_provider.dart';
 import 'package:verifyone/core/services/login_provider.dart';
 import 'package:verifyone/core/view/screens/authentications/login_screen.dart';
 import 'package:verifyone/core/view/screens/authentications/otp_screen.dart';
@@ -9,7 +8,7 @@ import 'package:verifyone/core/view_models/porviders/main_provider.dart';
 
 import 'core/view/screens/home/home_screen.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
@@ -32,7 +31,6 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => MainProvider()),
         ChangeNotifierProvider(create: (_) => LoginProviderNew()),
-        ChangeNotifierProvider(create: (_) => LocationProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -42,7 +40,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         // home:  HomeScreen( ),
-        home:  LoginScreen( ),
+        home: LoginScreen(),
         // home:  OtpScreen( ),
       ),
     );

@@ -1,9 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:verifyone/core/models/user_models.dart';
-import 'package:verifyone/core/services/location_provider.dart';
 import 'package:verifyone/core/utils/constants/colors.dart';
 import 'package:verifyone/core/utils/constants/widgets_screens.dart';
 import 'package:verifyone/core/view_models/porviders/main_provider.dart';
@@ -15,8 +13,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    Future.microtask(() => Provider.of<LocationProvider>(context, listen: false)
-        .getCurrentLocationAndSave());
+
     MainProvider mainprovider =
         Provider.of<MainProvider>(context, listen: false);
 
@@ -110,22 +107,23 @@ class HomeScreen extends StatelessWidget {
               child: Consumer<MainProvider>(
                 builder: (context, pro, child) {
                   return ListView.builder(
-                    itemCount: pro.filteredUsersList.length +
-                        (pro.isFetching
-                            ? 1
-                            : 0), // +1 for loading indicator if isLoading is true
+                    itemCount: pro.filteredUsersList.length + 1,
                     padding: EdgeInsets.symmetric(vertical: 4.0),
-                    shrinkWrap: false, // Remove shrinkWrap
-                    physics:
-                        AlwaysScrollableScrollPhysics(), // Add scrollable physics
+                    physics: ScrollPhysics(),
+                    shrinkWrap: true,
                     itemBuilder: (context, index) {
-                      if (index == pro.filteredUsersList.length &&
-                          pro.isFetching) {
-                        // Show loading indicator when reaching the end of the list and data is being fetched
-                        return Center(child: CircularProgressIndicator());
+                      if (index == pro.filteredUsersList.length) {
+                        return Center(
+                          child: ElevatedButton(
+                            onPressed: pro.isFetching ? null : pro.fetchUsers,
+                            child: pro.isFetching
+                                ? CircularProgressIndicator()
+                                : Text("Load More"),
+                          ),
+                        );
                       }
 
-                      // Regular list item rendering
+                      // Display each user item
                       AppUser item = pro.filteredUsersList[index];
                       return Padding(
                         padding: EdgeInsets.symmetric(vertical: 4.0),
@@ -149,8 +147,10 @@ class HomeScreen extends StatelessWidget {
                             ),
                             title: Text(item.name),
                             subtitle: Text(item.number),
-                            trailing: Text("Age: ${item.age}",
-                                style: TextStyle(fontSize: 14)),
+                            trailing: Text(
+                              "Age: ${item.age}",
+                              style: TextStyle(fontSize: 14),
+                            ),
                           ),
                         ),
                       );
@@ -164,10 +164,6 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-
-
-
-
 
   void _showAddUserDialog(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -412,9 +408,6 @@ class HomeScreen extends StatelessWidget {
 void _sortingPopup(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
 
-  // Add a variable to track the selected sorting option
-  int? selectedOption = 0; // 0 for All, 1 for Younger, 2 for Older
-
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -424,6 +417,7 @@ void _sortingPopup(BuildContext context) {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Consumer<MainProvider>(builder: (context, prov, child) {
+              int? tempOption = prov.selectedOption;
               return Container(
                 width: screenWidth * 0.8,
                 padding: EdgeInsets.all(screenWidth * 0.05),
@@ -436,10 +430,10 @@ void _sortingPopup(BuildContext context) {
                       fillColor: WidgetStatePropertyAll(AppColors.blue),
                       title: Text("All"),
                       value: 0,
-                      groupValue: selectedOption,
+                      groupValue: tempOption,
                       onChanged: (int? value) {
                         setState(() {
-                          selectedOption = value;
+                          prov.selectedOption = value;
                         });
                       },
                     ),
@@ -447,10 +441,10 @@ void _sortingPopup(BuildContext context) {
                       fillColor: WidgetStatePropertyAll(AppColors.blue),
                       title: Text("Age: Younger"),
                       value: 1,
-                      groupValue: selectedOption,
+                      groupValue: tempOption,
                       onChanged: (int? value) {
                         setState(() {
-                          selectedOption = value;
+                          prov.selectedOption = value;
                         });
                       },
                     ),
@@ -458,10 +452,10 @@ void _sortingPopup(BuildContext context) {
                       fillColor: WidgetStatePropertyAll(AppColors.blue),
                       title: Text("Age: Older"),
                       value: 2,
-                      groupValue: selectedOption,
+                      groupValue: tempOption,
                       onChanged: (int? value) {
                         setState(() {
-                          selectedOption = value;
+                          prov.selectedOption = value;
                         });
                       },
                     ),
@@ -469,15 +463,16 @@ void _sortingPopup(BuildContext context) {
                     Center(
                         child: ElevatedButton(
                       onPressed: () {
-                        prov.sortUsersByAge(
-                          selectedOption,
-                        );
+                        String currentQuery = prov.nameController.text;
+                        prov.filterUsers(currentQuery);
                         Navigator.pop(context);
                       },
                       child: Text(
                         "Apply",
-                        style: TextStyle(color: AppColors.blue,
-                            fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: AppColors.blue,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600),
                       ),
                     )),
                   ],
