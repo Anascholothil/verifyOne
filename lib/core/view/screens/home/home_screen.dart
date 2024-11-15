@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
         return FloatingActionButton(
           shape: const CircleBorder(),
           onPressed: () {
-            pro.cleartextfield();
+            pro.clearTextFields();
             _showAddUserDialog(context);
           },
           backgroundColor: Colors.black,
